@@ -1,0 +1,28 @@
+temp file
+
+index=ops_nn_nl_nnb_k8s_eks "kubernetes.namespace_name"="osxrisk-prd"
+| eval hour=strftime(_time, "%H")
+| where hour>=8 AND hour<17
+| transaction maxspan=2s
+| search log="*ERROR*" OR log="*SEVERE*"
+| where NOT match(log, "INFO|WARN")
+| eval first_newline=strpos(log, "
+")
+| eval second_newline=strpos(substr(log, first_newline+1), "
+") + first_newline + 1
+| eval log=substr(log, 1, second_newline)
+| table log
+
+
+index=ops_nn_nl_nnb_k8s_eks "kubernetes.namespace_name"="osxrisk-prd"
+| eval hour=strftime(_time, "%H")
+| where hour>=8 AND hour<17
+| transaction maxspan=2s
+| search log="*ERROR*" OR log="*SEVERE*"
+| where NOT match(log, "INFO|WARN")
+| rex field=log "(?<line1>.+?)[\r\n]+(?<line2>.+?)[\r\n]"
+| eval log=line1 + "
+" + line2
+| fields - line1, line2
+| table log
+
