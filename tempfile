@@ -66,6 +66,36 @@ index=ops_nn_nl_nnb_k8s_eks "kubernetes.namespace_name"="osxrisk-prd"
 | fields - line1, line2
 | table timestamp, log_preview, log
 
+index=ops_nn_nl_nnb_k8s_eks "kubernetes.namespace_name"="osxrisk-prd"
+| eval hour=strftime(_time, "%H")
+| where hour>=8 AND hour<17
+| transaction maxspan=2s
+| search log="*ERROR*" OR log="*SEVERE*"
+| where NOT match(log, "INFO|WARN")
+| eval timestamp=strftime(_time, "%Y-%m-%d %H:%M:%S")
+| rex field=log "(?<line1>.+?)[\r\n]+(?<line2>.+?)[\r\n]"
+| eval log_preview=line1 + " | " + line2
+| fields - line1, line2
+| table timestamp, log_preview, log
+| fields - log
+
+index=ops_nn_nl_nnb_k8s_eks "kubernetes.namespace_name"="osxrisk-prd"
+| eval hour=strftime(_time, "%H")
+| where hour>=8 AND hour<17
+| transaction maxspan=2s
+| search log="*ERROR*" OR log="*SEVERE*"
+| where NOT match(log, "INFO|WARN")
+| eval timestamp=strftime(_time, "%Y-%m-%d %H:%M:%S")
+| rex field=log "(?<line1>.+?)[\r\n]+(?<line2>.+?)[\r\n]"
+| eval log_preview=line1 + " | " + line2
+| eval _raw=log
+| fields timestamp, log_preview, _raw
+| table timestamp, log_preview
+
+Yes, but there's an issue with that HTML - it will only show ONE result because it uses $results.timestamp$ (singular).
+For ALL results, you need to loop through them. Unfortunately, Splunk's email doesn't support loops in the message field directly.
+
+
 
 
 
